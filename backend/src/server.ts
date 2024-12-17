@@ -1,44 +1,31 @@
-import express, { Application } from 'express';
-import cors from 'cors';
-import { sequelize, syncModels } from './models';
-import loteRoutes from './routes/loteRoutes';
-import corralRoutes from './routes/corralRoutes';
-import cerdoRoutes from './routes/cerdoRoutes';
+// src/server.ts
+import express from 'express';
+import dotenv from 'dotenv';
+import sequelize from './config/database';
 
-const app: Application = express();
-const PORT: number = Number(process.env.PORT) || 3000;
+dotenv.config();
 
-// Middlewares
-app.use(cors());
+const app = express();
+const port = process.env.PORT || 3000;
+
+// Middleware
 app.use(express.json());
 
-// Logging middleware
-app.use((req, res, next) => {
-  console.log(`${req.method} ${req.path}`);
-  next();
+// Test database connection
+sequelize.authenticate()
+  .then(() => {
+    console.log('Database connection has been established successfully.');
+  })
+  .catch(err => {
+    console.error('Unable to connect to the database:', err);
+  });
+
+// Basic route
+app.get('/', (req, res) => {
+  res.json({ message: 'Granja Valencia API' });
 });
 
-// Rutas
-app.use('/api/lotes', loteRoutes);
-app.use('/api/corrales', corralRoutes);
-app.use('/api/cerdos', cerdoRoutes);
-
-// Iniciar servidor
-const iniciarServidor = async (): Promise<void> => {
-  try {
-    await sequelize.authenticate();
-    console.log('Conexión a base de datos establecida');
-    
-    await syncModels();
-    
-    app.listen(PORT, () => {
-      console.log(`Servidor corriendo en puerto ${PORT}`);
-    });
-  } catch (error) {
-    console.error('Error al iniciar el servidor:', error);
-  }
-};
-
-iniciarServidor();
-
-export { app };
+// Start server
+app.listen(port, () => {
+  console.log(`Server is running on port ${port}`);
+});
